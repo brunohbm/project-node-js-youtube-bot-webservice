@@ -1,0 +1,18 @@
+{
+    "editor.tabSize": 4,
+    "editor.useTabStops": true,
+    "editor.insertSpaces": true,
+    "editor.trimAutoWhitespace": true,
+    "editor.detectIndentation": false,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": true
+    },
+    "editor.formatOnSave": false,
+    "editor.rulers": [120],
+    "files.trimFinalNewlines": true,
+    "files.insertFinalNewline": true,
+    "files.eol": "\n",
+    "files.associations": {
+        ".huskyrc": "json"
+    }
+}
