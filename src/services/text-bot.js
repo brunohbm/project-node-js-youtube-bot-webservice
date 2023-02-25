@@ -4,7 +4,7 @@ const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
 });
 const openAiApi = new OpenAIApi(configuration);  
-const PROMPT_COMPLEMENT = "Uma lista em JSON, 5 PROMPT_TEXT com nome, descrição, ano de lançamento e avaliação. As chaves do JSON devem ser nome, descricao, ano_lancamento e avaliacao"
+const PROMPT_COMPLEMENT = "Me de uma lista em JSON, dos 5 PROMPT_TEXT com nome, descrição, ano de lançamento e avaliação. As chaves do JSON devem ser nome, descricao, ano_lancamento e avaliacao"
 
 async function fetchContentFromChatGPT(promptText) {
     const finalPrompt =  PROMPT_COMPLEMENT.replace('PROMPT_TEXT', promptText);
