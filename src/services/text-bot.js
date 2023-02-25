@@ -1,13 +1,13 @@
-const { Configuration, OpenAIApi } = require("openai");
+const { Configuration, OpenAIApi } = require('openai');
 
 const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
 });
-const openAiApi = new OpenAIApi(configuration);  
-const PROMPT_COMPLEMENT = "Me de uma lista em JSON, dos 5 PROMPT_TEXT com nome, descrição, ano de lançamento e avaliação. As chaves do JSON devem ser nome, descricao, ano_lancamento e avaliacao"
+const openAiApi = new OpenAIApi(configuration);
+const PROMPT_COMPLEMENT = 'Me de uma lista em JSON, dos 5 PROMPT_TEXT com nome, descrição grande, ano de lançamento, gêneros e avaliação. As chaves do JSON devem ser nome, descricao, ano_lancamento, generos e avaliacao';
 
 async function fetchContentFromChatGPT(promptText) {
-    const finalPrompt =  PROMPT_COMPLEMENT.replace('PROMPT_TEXT', promptText);
+    const finalPrompt = PROMPT_COMPLEMENT.replace('PROMPT_TEXT', promptText);
     console.warn(`GERANDO: ${finalPrompt}`);
 
     const { data } = await openAiApi.createCompletion({
@@ -15,15 +15,15 @@ async function fetchContentFromChatGPT(promptText) {
         prompt: finalPrompt,
         temperature: 0,
         max_tokens: 4000,
-    })
+    });
 
     return data.choices[0].text;
 }
 
 function createJsonFromApiResponse(apiResponse) {
     return apiResponse
-        .replace(/\n/g,'')
-        .replace(/  /g,'')
+        .replace(/\n/g, '')
+        .replace(/ {2}/g, '')
         .trim()
         .match(/(\{).*?(\})/g)
         .map(JSON.parse);
@@ -37,4 +37,4 @@ async function createListFromText(text) {
 
 module.exports = {
     createListFromText,
-};  
+};
