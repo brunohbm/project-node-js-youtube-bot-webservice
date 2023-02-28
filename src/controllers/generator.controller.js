@@ -29,6 +29,13 @@ async function generateContentTags(content) {
     ];
 }
 
+async function addVideosTrailerLink(videos) {
+    const videosPrommise = videos.map(video => `${video.name} trailer`);
+    // Create and call youtube service.
+    // https://www.googleapis.com/youtube/v3/search?part=snippet&q=starwars&type=video&key=KEY
+    return videos;
+}
+
 async function generateVideosArray(req, res) {
     const { theme } = req.query;
     if (!theme) {
@@ -39,6 +46,7 @@ async function generateVideosArray(req, res) {
     content.theme = theme;
     content.videos = await chatGPTService.createJSONListFromText(theme, VIDEO_JSON_CONFIG);
     content.tags = await generateContentTags(content);
+    content.videos = addVideosTrailerLink(content.videos);
 
     res.status(200).json(content);
 }
