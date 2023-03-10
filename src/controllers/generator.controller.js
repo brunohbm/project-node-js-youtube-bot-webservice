@@ -1,14 +1,14 @@
 const _uniq = require('lodash/uniq');
 
 const chatGPTService = require('../services/chat-gpt-service');
-const tagService = require('../services/tag-service');
+const youtubeService = require('../services/youtube-service');
 
 const VIDEO_JSON_CONFIG = {
     name: 'name',
-    description: 'big description',
-    release_year: 'release year',
     genre: 'genre',
     evaluation: 'evaluation',
+    release_year: 'release year',
+    description: 'big description',
 };
 
 async function generateContentTags(content) {
@@ -21,7 +21,7 @@ async function generateContentTags(content) {
 
     tags = _uniq(tags);
 
-    const tagsFromTheme = await tagService.createYoutubeTagsFromText(theme);
+    const tagsFromTheme = await youtubeService.createTagsFromText(theme);
 
     return [
         ...tags,
@@ -30,10 +30,22 @@ async function generateContentTags(content) {
 }
 
 async function addVideosTrailerLink(videos) {
-    const videosPrommise = videos.map(video => `${video.name} trailer`);
-    // Create and call youtube service.
-    // https://www.googleapis.com/youtube/v3/search?part=snippet&q=starwars&type=video&key=KEY
-    return videos;
+    const videosPrommise = videos.map(async video => {
+        const newVideo = { ...video };
+        const { items } = await youtubeService.getVideosInfoFromText(`${video.name} trailer`);
+        const { id } = items[0];
+        newVideo.trailerId = id.videoId;
+
+        return newVideo;
+    });
+
+    const allVideosTrailers = await Promise.all(videosPrommise);
+    return allVideosTrailers;
+}
+
+// TODO - test this function
+async function oderVideosByEvaluationAsc(videos) {
+    return videos.sort((videoA, videoB) => videoA.evaluation - videoB.evaluation);
 }
 
 async function generateVideosArray(req, res) {
@@ -45,8 +57,9 @@ async function generateVideosArray(req, res) {
     const content = {};
     content.theme = theme;
     content.videos = await chatGPTService.createJSONListFromText(theme, VIDEO_JSON_CONFIG);
+    content.videos = oderVideosByEvaluationAsc(content.videos);
     content.tags = await generateContentTags(content);
-    content.videos = addVideosTrailerLink(content.videos);
+    content.videos = await addVideosTrailerLink(content.videos);
 
     res.status(200).json(content);
 }
