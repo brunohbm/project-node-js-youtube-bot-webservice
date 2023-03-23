@@ -7,7 +7,7 @@ const VIDEO_JSON_CONFIG = {
     name: 'name',
     genre: 'genre',
     evaluation: 'evaluation',
-    release_year: 'release year',
+    releaseYear: 'release year',
     description: 'big description',
 };
 
@@ -43,11 +43,6 @@ async function addVideosTrailerLink(videos) {
     return allVideosTrailers;
 }
 
-// TODO - test this function
-async function oderVideosByEvaluationAsc(videos) {
-    return videos.sort((videoA, videoB) => videoA.evaluation - videoB.evaluation);
-}
-
 async function generateVideosArray(req, res) {
     const { theme } = req.query;
     if (!theme) {
@@ -57,9 +52,8 @@ async function generateVideosArray(req, res) {
     const content = {};
     content.theme = theme;
     content.videos = await chatGPTService.createJSONListFromText(theme, VIDEO_JSON_CONFIG);
-    content.videos = oderVideosByEvaluationAsc(content.videos);
-    content.tags = await generateContentTags(content);
     content.videos = await addVideosTrailerLink(content.videos);
+    content.tags = await generateContentTags(content);
 
     res.status(200).json(content);
 }

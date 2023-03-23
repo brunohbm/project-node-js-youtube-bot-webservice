@@ -1,3 +1,4 @@
-const OPTIONS = [];
+const OPTIONS = [{
+}];
 
 module.exports = OPTIONS;
