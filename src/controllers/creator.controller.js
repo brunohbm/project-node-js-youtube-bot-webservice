@@ -1,21 +1,19 @@
-const fs = require('fs');
-const path = require('path');
-const ytdl = require('ytdl-core');
-const logAction = require('../helper/log-helper');
-
-const DOWNLOAD_VIDEO_PATH = './videos';
-
-// TODO - download in 1080p.
-
-async function saveVideo(videoId) {
-    const url = `https://www.youtube.com/watch?v=${videoId}`;
-    const streamDirection = path.join(DOWNLOAD_VIDEO_PATH, `${videoId}.mp4`);
-    await ytdl(url).pipe(fs.createWriteStream(streamDirection));
-    logAction(`VIDEO: ${videoId} DOWNLOADED!`);
-}
+const { getErrorText } = require('../helper/log-helper');
+const { downloadAndMergeYoutubeVideo } = require('../services/ffmpeg-service');
 
 async function createAndUploadCompilationVideo(req, res) {
-    await saveVideo('kpGo2_d3oYE');
+    const { videos } = req.body;
+    await Promise.all([
+        downloadAndMergeYoutubeVideo(videos[2].trailerId),
+        downloadAndMergeYoutubeVideo(videos[3].trailerId),
+    ]);
+
+    // await downloadAndMergeYoutubeVideo(videos[0].trailerId);
+    // await downloadAndMergeYoutubeVideo(videos[1].trailerId);
+    // await downloadAndMergeYoutubeVideo(videos[4].trailerId);
+
+    // TODO
+    console.log(getErrorText('Fix error MinigetError: Status code: 410 on videos 0,1,4!'));
 
     res.status(200).json();
 }

@@ -1,4 +1,5 @@
 const axios = require('axios');
+const ytdl = require('ytdl-core');
 
 async function createTagsFromText(text) {
     const { data } = await axios.get('https://rapidtags.io/api/generator', {
@@ -27,7 +28,28 @@ async function getVideosInfoFromText(text, params = {}) {
     return data;
 }
 
+function createVideoUrl(videoId) {
+    return `https://www.youtube.com/watch?v=${videoId}`;
+}
+
+function downloadAudio(videoId) {
+    return ytdl(
+        createVideoUrl(videoId),
+        { quality: 'highestaudio', filter: 'audioonly' },
+    );
+}
+
+function downloadVideo(videoId) {
+    return ytdl(
+        createVideoUrl(videoId),
+        { quality: 'highestvideo', filter: 'videoonly' },
+    );
+}
+
 module.exports = {
+    downloadVideo,
+    downloadAudio,
+    createVideoUrl,
     createTagsFromText,
     getVideosInfoFromText,
 };
