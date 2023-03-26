@@ -9,6 +9,7 @@
         "class-methods-use-this": "off",
         "no-useless-constructor": "off",
         "import/no-useless-path-segments": "off",
+        "import/no-extraneous-dependencies": "off",
         "no-console": [
             "error",
             {
