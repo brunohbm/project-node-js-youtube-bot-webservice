@@ -6,8 +6,6 @@ const { parseToMB } = require('../helper/parser-helper');
 const { downloadAudio, downloadVideo } = require('./youtube-service');
 const { getActionText, getErrorText, getSuccessText } = require('../helper/log-helper');
 
-// https://github.com/fent/node-ytdl-core/blob/HEAD/example/ffmpeg.js
-
 const DOWNLOAD_VIDEO_PATH = './files';
 const AUDIO_VIDEO_STREAM_ARGS = [
     // Remove ffmpeg's console spamming

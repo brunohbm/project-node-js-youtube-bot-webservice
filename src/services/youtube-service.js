@@ -42,7 +42,10 @@ function downloadAudio(videoId) {
 function downloadVideo(videoId) {
     return ytdl(
         createVideoUrl(videoId),
-        { quality: 'highestvideo', filter: 'videoonly' },
+        {
+            filter: 'videoonly',
+            quality: 'highestvideo',
+        },
     );
 }
 
