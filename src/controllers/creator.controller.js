@@ -1,19 +1,33 @@
-const { getErrorText } = require('../helper/log-helper');
-const { downloadAndMergeYoutubeVideo } = require('../services/ffmpeg-service');
+const ffmpeg = require('ffmpeg-static');
+
+const { logActionText, logSuccessText } = require('../helper/log-helper');
+const { downloadYoutubeVideo } = require('../services/youtube-service');
+
+async function downloadVideo(video) {
+    const metadata = await downloadYoutubeVideo(video.trailerId);
+    logActionText(`video ${metadata.filename} downloaded!`);
+    return { ...video, metadata };
+}
+
+// ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=fadeblack:duration=5:offset=0 fadeblackVideo.mp4
 
 async function createAndUploadCompilationVideo(req, res) {
-    const { videos } = req.body;
-    await Promise.all([
-        downloadAndMergeYoutubeVideo(videos[2].trailerId),
-        downloadAndMergeYoutubeVideo(videos[3].trailerId),
-    ]);
+    const {
+        banner_id: bannerId,
+        videos, title, tags,
+    } = req.body;
 
-    // await downloadAndMergeYoutubeVideo(videos[0].trailerId);
-    // await downloadAndMergeYoutubeVideo(videos[1].trailerId);
-    // await downloadAndMergeYoutubeVideo(videos[4].trailerId);
+    // logActionText('starting videos download');
+    // const videosWithMetadata = await Promise.all(videos.map(downloadVideo));
+    // logSuccessText('videos download finished!');
 
-    // TODO
-    console.log(getErrorText('Fix error MinigetError: Status code: 410 on videos 0,1,4!'));
+    // IS this the right lib?
+    console.log(ffmpeg);
+
+    ffmpeg(`${__dirname}../../files/c0i88t0Kacs.webm`)
+        .videoFilter('-filter_complex xfade=transition=fadeblack:duration=5:offset=0');
+
+    console.log(videosWithMetadata);
 
     res.status(200).json();
 }

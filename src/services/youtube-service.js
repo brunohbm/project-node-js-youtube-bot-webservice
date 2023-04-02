@@ -1,5 +1,5 @@
 const axios = require('axios');
-const ytdl = require('ytdl-core');
+const youtubeDl = require('youtube-dl-exec');
 
 async function createTagsFromText(text) {
     const { data } = await axios.get('https://rapidtags.io/api/generator', {
@@ -32,27 +32,24 @@ function createVideoUrl(videoId) {
     return `https://www.youtube.com/watch?v=${videoId}`;
 }
 
-function downloadAudio(videoId) {
-    return ytdl(
-        createVideoUrl(videoId),
-        { quality: 'highestaudio', filter: 'audioonly' },
-    );
-}
+async function downloadYoutubeVideo(videoId) {
+    const videoUrl = createVideoUrl(videoId);
+    const videoValues = await youtubeDl.exec(videoUrl, {
+        output: `${__dirname}/../../files/${videoId}`,
+        printJson: true,
+        embedSubs: true,
+    });
+    const metadata = JSON.parse(videoValues.stdout);
 
-function downloadVideo(videoId) {
-    return ytdl(
-        createVideoUrl(videoId),
-        {
-            filter: 'videoonly',
-            quality: 'highestvideo',
-        },
-    );
+    return {
+        ...metadata,
+        filename: `${videoId}.${metadata.ext}`,
+    };
 }
 
 module.exports = {
-    downloadVideo,
-    downloadAudio,
     createVideoUrl,
     createTagsFromText,
+    downloadYoutubeVideo,
     getVideosInfoFromText,
 };
