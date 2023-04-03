@@ -2,6 +2,7 @@ const ffmpeg = require('ffmpeg-static');
 
 const { logActionText, logSuccessText } = require('../helper/log-helper');
 const { downloadYoutubeVideo } = require('../services/youtube-service');
+const { createImage } = require('../services/canvas-service');
 
 async function downloadVideo(video) {
     const metadata = await downloadYoutubeVideo(video.trailerId);
@@ -9,12 +10,11 @@ async function downloadVideo(video) {
     return { ...video, metadata };
 }
 
-// ffmpeg -i inputVideo1.mp4 -i inputVideo2.mp4 -filter_complex xfade=transition=fadeblack:duration=5:offset=0 fadeblackVideo.mp4
-
 async function createAndUploadCompilationVideo(req, res) {
     const {
         banner_id: bannerId,
         videos, title, tags,
+        type,
     } = req.body;
 
     // logActionText('starting videos download');
@@ -22,14 +22,17 @@ async function createAndUploadCompilationVideo(req, res) {
     // logSuccessText('videos download finished!');
 
     // IS this the right lib?
-    console.log(ffmpeg);
+    // console.log(ffmpeg);
 
-    ffmpeg(`${__dirname}../../files/c0i88t0Kacs.webm`)
-        .videoFilter('-filter_complex xfade=transition=fadeblack:duration=5:offset=0');
+    // ffmpeg(`${__dirname}../../files/c0i88t0Kacs.webm`)
+    //     .videoFilter('-filter_complex xfade=transition=fadeblack:duration=5:offset=0');
 
-    console.log(videosWithMetadata);
+    // console.log(videosWithMetadata);
 
-    res.status(200).json();
+    // TODO - Add other texts to the image
+    createImage(type);
+
+    res.status(200).json({});
 }
 
 module.exports = {

@@ -22,10 +22,15 @@ async function generateContentTags(content) {
     tags = _uniq(tags);
 
     const tagsFromTheme = await youtubeService.createTagsFromText(theme);
+    const tagsFromVideos = await Promise.all(videos.map(async ({ trailerId }) => {
+        const { tags: videoTags } = await youtubeService.getVideoFullInfo(trailerId);
+        return videoTags;
+    }));
 
     return [
         ...tags,
         ...tagsFromTheme,
+        ...tagsFromVideos.flat(),
     ];
 }
 
@@ -33,8 +38,8 @@ async function addVideosTrailerLink(videos) {
     const videosPrommise = videos.map(async video => {
         const newVideo = { ...video };
         const { items } = await youtubeService.getVideosInfoFromText(`${video.name} trailer`);
-        const { id } = items[0];
-        newVideo.trailerId = id.videoId;
+        const { id: { videoId } } = items[0];
+        newVideo.trailerId = videoId;
 
         return newVideo;
     });

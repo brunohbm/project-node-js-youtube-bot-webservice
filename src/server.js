@@ -11,6 +11,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use('/options', optionsRouter);
 app.use('/generator', generatorRouter);
 app.use('/youtube', youtubeRouter);

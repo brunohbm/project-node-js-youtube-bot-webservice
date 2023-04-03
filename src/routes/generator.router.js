@@ -4,6 +4,6 @@ const generatorController = require('../controllers/generator.controller');
 
 const generatorRouter = express.Router();
 
-generatorRouter.get('/', generatorController.generateVideosArray);
+generatorRouter.get('/video-compilation', generatorController.generateVideosArray);
 
 module.exports = generatorRouter;

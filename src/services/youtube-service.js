@@ -32,6 +32,17 @@ function createVideoUrl(videoId) {
     return `https://www.youtube.com/watch?v=${videoId}`;
 }
 
+async function getVideoFullInfo(videoId) {
+    const videoUrl = createVideoUrl(videoId);
+    const data = await youtubeDl(videoUrl, {
+        noWarnings: true,
+        dumpSingleJson: true,
+        noCheckCertificates: true,
+    });
+
+    return data;
+}
+
 async function downloadYoutubeVideo(videoId) {
     const videoUrl = createVideoUrl(videoId);
     const videoValues = await youtubeDl.exec(videoUrl, {
@@ -49,6 +60,7 @@ async function downloadYoutubeVideo(videoId) {
 
 module.exports = {
     createVideoUrl,
+    getVideoFullInfo,
     createTagsFromText,
     downloadYoutubeVideo,
     getVideosInfoFromText,
