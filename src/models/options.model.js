@@ -1,27 +1,32 @@
 const OPTIONS = [
+    // Bad in the info
     {
         key: 'movies',
         label: 'Movies',
-        mainColor: '#cc4061',
+        fontColor: '#cc4061',
         backgroungColor: '#f5c32d',
+        primaryColor: '#f5c32d',
     },
     {
         key: 'animes',
         label: 'Animes',
-        mainColor: '#e71e32',
+        fontColor: '#e71e32',
         backgroungColor: '#091118',
+        primaryColor: '#e71e32',
     },
     {
         key: 'games',
         label: 'Games',
-        mainColor: '#091118',
+        fontColor: '#091118',
         backgroungColor: '#7AE582',
+        primaryColor: '#7AE582',
     },
     {
         key: 'series',
         label: 'Series',
-        mainColor: '#F34213',
+        fontColor: '#F34213',
         backgroungColor: '#C0F8D1',
+        primaryColor: '#F34213',
     },
 ];
 

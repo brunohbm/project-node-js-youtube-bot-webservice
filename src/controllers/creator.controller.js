@@ -6,7 +6,7 @@ const { createImage } = require('../services/canvas-service');
 
 async function downloadVideo(video) {
     const metadata = await downloadYoutubeVideo(video.trailerId);
-    logActionText(`video ${metadata.filename} downloaded!`);
+    logActionText(`${metadata.filename} downloaded!`);
     return { ...video, metadata };
 }
 
@@ -19,18 +19,18 @@ async function createAndUploadCompilationVideo(req, res) {
 
     // logActionText('starting videos download');
     // const videosWithMetadata = await Promise.all(videos.map(downloadVideo));
-    // logSuccessText('videos download finished!');
+    // logSuccessText('videos downloaded!');
 
+    // logActionText('Creating info images');
+    // videos.forEach(video => { createImage(video, type); });
+    // logSuccessText('info images created!');
+
+    // TODO - See if you can improve createImage function and if the function should be in this file or not.
+    // TODO - Merge videos and get start and finish time of each one.
     // IS this the right lib?
     // console.log(ffmpeg);
-
     // ffmpeg(`${__dirname}../../files/c0i88t0Kacs.webm`)
     //     .videoFilter('-filter_complex xfade=transition=fadeblack:duration=5:offset=0');
-
-    // console.log(videosWithMetadata);
-
-    // TODO - Add other texts to the image
-    createImage(type);
 
     res.status(200).json({});
 }
