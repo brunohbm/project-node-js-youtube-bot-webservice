@@ -2,7 +2,7 @@ const ffmpeg = require('ffmpeg-static');
 
 const { logActionText, logSuccessText } = require('../helper/log-helper');
 const { downloadYoutubeVideo } = require('../services/youtube-service');
-const { createImage } = require('../services/canvas-service');
+const { createCompilationVideoInfo } = require('../services/canvas-service');
 
 async function downloadVideo(video) {
     const metadata = await downloadYoutubeVideo(video.trailerId);
@@ -22,10 +22,9 @@ async function createAndUploadCompilationVideo(req, res) {
     // logSuccessText('videos downloaded!');
 
     // logActionText('Creating info images');
-    // videos.forEach(video => { createImage(video, type); });
+    // videos.forEach(video => { createCompilationVideoInfo(video, type); });
     // logSuccessText('info images created!');
 
-    // TODO - See if you can improve createImage function and if the function should be in this file or not.
     // TODO - Merge videos and get start and finish time of each one.
     // IS this the right lib?
     // console.log(ffmpeg);
