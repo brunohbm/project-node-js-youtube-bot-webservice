@@ -1,8 +1,9 @@
 const { createCanvas } = require('canvas');
 const fs = require('fs');
 const { breakTextIntoManyLines } = require('../helper/text-helper');
+const { FILES_FOLDER_NAME } = require('../strings');
 
-function createCompilationVideoInfo(video, type) {
+function createVideoIntroImage(video, type) {
     const config = {
         leftPadding: 0,
         leftBarWidth: 150,
@@ -68,9 +69,11 @@ function createCompilationVideoInfo(video, type) {
     drawTitleAndValue('Genre', video.genre);
 
     const buffer = canvas.toBuffer('image/png');
-    fs.writeFileSync(`${__dirname}/../../files/${video.trailerId}_info.png`, buffer);
+    const filename = `${video.trailerId}_intro.png`;
+    fs.writeFileSync(`${__dirname}/../../${FILES_FOLDER_NAME}/${filename}`, buffer);
+    return filename;
 }
 
 module.exports = {
-    createCompilationVideoInfo,
+    createVideoIntroImage,
 };

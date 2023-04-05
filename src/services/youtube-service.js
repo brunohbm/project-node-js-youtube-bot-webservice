@@ -1,5 +1,7 @@
+const path = require('path');
 const axios = require('axios');
 const youtubeDl = require('youtube-dl-exec');
+const { FILES_FOLDER_NAME } = require('../strings');
 
 async function createTagsFromText(text) {
     const { data } = await axios.get('https://rapidtags.io/api/generator', {
@@ -46,9 +48,9 @@ async function getVideoFullInfo(videoId) {
 async function downloadYoutubeVideo(videoId) {
     const videoUrl = createVideoUrl(videoId);
     const videoValues = await youtubeDl.exec(videoUrl, {
-        output: `${__dirname}/../../files/${videoId}`,
         printJson: true,
         embedSubs: true,
+        output: path.join(__dirname, `../../${FILES_FOLDER_NAME}/`, videoId),
     });
     const metadata = JSON.parse(videoValues.stdout);
 
