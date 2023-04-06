@@ -9,9 +9,9 @@ const AUDIO_VIDEO_STREAM_OPTIONS = {
     windowsHide: true,
 };
 
-async function createVideoMp4FromImage(amountSeconds, filename, outputName) {
+async function createVideoFromImage(amountSeconds, filename, outputName, format) {
     return new Promise((resolve, reject) => {
-        const videoName = `${outputName}.mp4`;
+        const videoName = `${outputName}.${format}`;
         const ffmpegProcess = childProcess.spawn(ffmpeg, [
             '-loop', '1', '-framerate', '1', '-t', amountSeconds, '-i', `${DOWNLOAD_VIDEO_PATH}/${filename}`,
             path.join(DOWNLOAD_VIDEO_PATH, videoName),
@@ -22,6 +22,24 @@ async function createVideoMp4FromImage(amountSeconds, filename, outputName) {
     });
 }
 
+async function mergeVideos(filesNames, outputName) {
+    return new Promise((resolve, reject) => {
+        const videoName = `${outputName}.mp4`;
+        const videosToMerge = filesNames.map(filename => `${DOWNLOAD_VIDEO_PATH}/${filename}`).join('|');
+
+        const ffmpegProcess = childProcess.spawn(ffmpeg, [
+            //     '-i', 'concat:./src/services/c0i88t0Kacs.webm', '-c', 'copy',
+            '-f', 'concat', '-safe', '0', '-i', 'src/services/merge.txt', '-c', 'copy',
+            'mergedVideo.webm',
+        ], AUDIO_VIDEO_STREAM_OPTIONS);
+
+        ffmpegProcess.on('close', () => {
+            resolve(videoName);
+        });
+    });
+}
+
 module.exports = {
-    createVideoMp4FromImage,
+    mergeVideos,
+    createVideoFromImage,
 };
