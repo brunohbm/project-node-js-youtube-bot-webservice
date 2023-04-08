@@ -8,6 +8,10 @@ const { createVideoFromImage, mergeVideos } = require('../services/ffmpeg-servic
 const { FILES_FOLDER_NAME } = require('../strings');
 const { deleteFile } = require('../helper/file-helper');
 
+function getFilePath(filename) {
+    return path.join(__dirname, `../../${FILES_FOLDER_NAME}/`, filename);
+}
+
 async function downloadVideo(video) {
     const metadata = await downloadYoutubeVideo(video.trailerId);
     logActionText(`${metadata.filename} downloaded!`);
@@ -21,12 +25,22 @@ async function createAndUploadCompilationVideo(req, res) {
         type,
     } = req.body;
 
-    // logActionText('Downloading videos and creating intro');
+    logActionText('Downloading videos and creating intro');
     // const videosPrommise = videos.map(async video => {
     //     const videoMetadata = await downloadVideo(video);
     //     const introImage = createVideoIntroImage(video, type);
-    //     const introVideo = await createVideoFromImage('7', introImage, `${video.trailerId}_intro`, 'webm');
-    //     await deleteFile(path.join(__dirname, `../../${FILES_FOLDER_NAME}/`, introImage));
+    //     const introVideo = await createVideoFromImage({
+    //         format: 'webm',
+    //         addFade: true,
+    //         amountSeconds: 12,
+    //         filename: introImage,
+    //         outputName: `${video.trailerId}_intro`,
+    //     });
+
+    // TODO - Create function to add fadein and fadeout
+    // ffmpeg -i ./files/c0i88t0Kacs_intro.webm -vf "fade=t=in:st=0:d=2,fade=t=out:st=8:d=2" -c:a copy -y ./files/c0i88t0Kacs_intro.webm
+
+    //     await deleteFile(getFilePath(introImage));
 
     //     return {
     //         ...video,
@@ -35,11 +49,18 @@ async function createAndUploadCompilationVideo(req, res) {
     //     };
     // });
     // const videosWithMetadata = await Promise.all(videosPrommise);
-    // const thumbnailVideoName = await createVideoFromImage('5', thumbnailName, 'thumbnail', 'webm');
-    // logSuccessText('Videos downloaded and intros created!');
+    const thumbnailVideoName = await createVideoFromImage({
+        format: 'webm',
+        addFade: true,
+        amountSeconds: 6,
+        filename: thumbnailName,
+        outputName: 'thumbnail',
+    });
+    // await deleteFile(getFilePath(thumbnailName));
 
-    // TODO - The videos need to have the same codek and format
-    await mergeVideos(['c0i88t0Kacs_intro.webm', 'c0i88t0Kacs.webm'], 'c0i88t0Kacs_final', 'webm');
+    logSuccessText('Videos downloaded and intros created!');
+
+    // await mergeVideos(['c0i88t0Kacs_intro.webm', 'c0i88t0Kacs.webm'], 'c0i88t0Kacs_final', 'webm');
 
     // IS this the right lib?
     // console.log(ffmpeg);
