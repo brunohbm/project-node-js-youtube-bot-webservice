@@ -6,21 +6,34 @@ const { writeFile, deleteFile } = require('../helper/file-helper');
 
 const FILES_PATH = `./${FILES_FOLDER_NAME}`;
 
-const AUDIO_VIDEO_STREAM_OPTIONS = {
-    windowsHide: true,
-};
-
-async function createVideoFromImage(amountSeconds, filename, outputName, format) {
-    return new Promise((resolve, reject) => {
-        const videoName = `${outputName}.${format}`;
-        const ffmpegProcess = childProcess.spawn(ffmpeg, [
-            '-loop', '1', '-framerate', '1', '-t', amountSeconds, '-i', `${FILES_PATH}/${filename}`,
-            path.join(FILES_PATH, videoName),
-        ], AUDIO_VIDEO_STREAM_OPTIONS);
-
-        ffmpegProcess.on('close', () => { resolve(videoName); });
+async function executeFfmpegCommands(commands) {
+    await new Promise((resolve, reject) => {
+        const ffmpegProcess = childProcess.spawn(ffmpeg, commands, { windowsHide: true });
+        ffmpegProcess.on('close', () => { resolve(); });
         ffmpegProcess.on('error', error => { reject(error); });
     });
+}
+
+async function createVideoFromImage({
+    format, addFade,
+    filename, outputName,
+    amountSeconds, frameRate = '30',
+}) {
+    const commands = [
+        '-loop', '1', '-framerate', frameRate, '-t',
+        amountSeconds, '-i', `${FILES_PATH}/${filename}`,
+        '-f', 'lavfi', '-i', 'anullsrc=r=44100',
+        '-c:v', 'libvpx-vp9', '-pix_fmt', 'yuva420p',
+        '-auto-alt-ref', '0', '-c:a', 'libopus', '-shortest',
+    ];
+
+    if (addFade) {
+        commands.push('-vf', `fade=t=in:st=0:d=1.3,fade=t=out:st=${amountSeconds - 1.5}:d=1.3`);
+    }
+
+    commands.push(path.join(FILES_PATH, `${outputName}.${format}`));
+
+    await executeFfmpegCommands(commands);
 }
 
 async function mergeVideos(filesNames, outputName, format) {
@@ -29,27 +42,13 @@ async function mergeVideos(filesNames, outputName, format) {
     const videosToMergeText = filesNames.map(filename => `file '${filename}'`).join('\n');
 
     // await writeFile(textFileLocation, videosToMergeText);
-    // '-f', 'concat', '-safe', '0', '-i', textFileLocation, '-c', 'copy',
 
-    // I'm having a problem that the first intro video doesn't have audio and don't have a sutitle.
-    // And when merging the video, that is a problem.
+    const commands = [
+        '-f', 'concat', '-safe', '0', '-i', textFileLocation, '-c', 'copy',
+        '-y', path.join(FILES_PATH, videoName),
+    ];
 
-    await new Promise((resolve, reject) => {
-        const ffmpegProcess = childProcess.spawn(ffmpeg, [
-            '-i', './files/c0i88t0Kacs_intro.webm',
-            '-i', './files/c0i88t0Kacs.webm',
-            '-map', '0:v',
-            '-map', '1:v',
-            '-c:v', 'copy',
-            '-c:a', 'aac',
-            '-y', path.join(FILES_PATH, videoName),
-        ], AUDIO_VIDEO_STREAM_OPTIONS);
-
-        ffmpegProcess.on('close', () => { resolve(videoName); });
-        ffmpegProcess.on('error', error => { reject(error); });
-    });
-
-    // ffmpeg -i ./files/c0i88t0Kacs_intro.webm -i ./files/c0i88t0Kacs.webm -filter_complex "[0:v][0:a][1:v][1:a]concat=n=2:v=1:a=1[v][a]" -map "[v]" -map "[a]" -c:v copy -c:a aac -shortest output.mp4
+    await executeFfmpegCommands(commands);
 
     // await deleteFile(textFileLocation);
 }

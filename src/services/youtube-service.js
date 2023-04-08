@@ -49,7 +49,6 @@ async function downloadYoutubeVideo(videoId) {
     const videoUrl = createVideoUrl(videoId);
     const videoValues = await youtubeDl.exec(videoUrl, {
         printJson: true,
-        embedSubs: true,
         output: path.join(__dirname, `../../${FILES_FOLDER_NAME}/`, videoId),
     });
     const metadata = JSON.parse(videoValues.stdout);
