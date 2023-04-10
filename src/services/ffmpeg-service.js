@@ -14,6 +14,20 @@ async function executeFfmpegCommands(commands) {
     });
 }
 
+async function addFadeInOut({
+    outputName,
+    amountSeconds,
+    format, filename,
+}) {
+    const commands = [
+        '-i', `${FILES_PATH}/${filename}`,
+        '-vf', `fade=t=in:st=0:d=1.3,fade=t=out:st=${amountSeconds - 1.5}:d=1.3`,
+        '-c:a', 'copy', '-y', path.join(FILES_PATH, `${outputName}.${format}`),
+    ];
+
+    await executeFfmpegCommands(commands);
+}
+
 async function createVideoFromImage({
     format, addFade,
     filename, outputName,
@@ -41,19 +55,16 @@ async function mergeVideos(filesNames, outputName, format) {
     const textFileLocation = `${FILES_PATH}/videosToMerge.txt`;
     const videosToMergeText = filesNames.map(filename => `file '${filename}'`).join('\n');
 
-    // await writeFile(textFileLocation, videosToMergeText);
-
-    const commands = [
+    await writeFile(textFileLocation, videosToMergeText);
+    await executeFfmpegCommands([
         '-f', 'concat', '-safe', '0', '-i', textFileLocation, '-c', 'copy',
         '-y', path.join(FILES_PATH, videoName),
-    ];
-
-    await executeFfmpegCommands(commands);
-
-    // await deleteFile(textFileLocation);
+    ]);
+    await deleteFile(textFileLocation);
 }
 
 module.exports = {
     mergeVideos,
+    addFadeInOut,
     createVideoFromImage,
 };
