@@ -47,35 +47,43 @@ async function createVideo(video, type, format) {
     return {
         ...video,
         metadata: videoMetadata,
+        filename: `${finalVideoName}.${format}`,
         duration: videoMetadata.duration + introSeconds,
     };
 }
 
-async function createThumbnail(thumbnailName, format) {
+async function createThumbnail(thumbnailName, outputName, format) {
     await createVideoFromImage({
         format,
+        outputName,
         addFade: true,
         amountSeconds: 6,
         filename: thumbnailName,
-        outputName: 'thumbnail',
     });
-    // await deleteFile(getFilePath(thumbnailName));
+    await deleteFile(getFilePath(thumbnailName));
 
     logActionText('thumbnail created!');
+
+    return `${thumbnailName}.${format}`;
 }
 
 async function createAndUploadCompilationVideo(req, res) {
     const {
-        image_name: thumbnailName,
-        videos, title, tags,
         type,
+        videos, title, tags,
+        image_name: thumbnailName,
     } = req.body;
     const format = 'webm';
 
     logActionText('Downloading videos and creating intro');
 
     const videosWithMetadata = await Promise.all(videos.map(video => createVideo(video, type, format)));
-    await createThumbnail(thumbnailName, format);
+    const thumbnailVideoName = await createThumbnail(thumbnailName, 'thumbnail', format);
+
+    const compilatedVideos = [thumbnailVideoName, ...videosWithMetadata.map(({ filename }) => filename)];
+    await mergeVideos([...compilatedVideos, 'end_screen.webm'], 'final_video', format);
+
+    await Promise.all(compilatedVideos.map(videoName => deleteFile(getFilePath(videoName))));
 
     logSuccessText('Videos downloaded and intros created!');
 
@@ -87,7 +95,7 @@ module.exports = {
 };
 
 // 1 - Download youtube videos (see if video time is on return).
-// - Get video time
+// - Merge videos
 // 2 - Create video description as image.
 // 3 - Join Intro with youtube video and description image.
 // 4 - Create video description
