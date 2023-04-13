@@ -11,7 +11,10 @@ function getFilePath(filename) {
     return path.join(__dirname, `../../${FILES_FOLDER_NAME}/`, filename);
 }
 
-async function createVideo(video, type, format) {
+async function createVideosAndThumbnails(videos, type, format, allVideosAndThumbnails) {
+    const [video] = videos;
+    if (!video) return allVideosAndThumbnails;
+
     const introSeconds = 12;
     const imageVideoName = `${video.trailerId}_intro`;
     const videoWithFadeName = `${video.trailerId}_with_fade`;
@@ -25,31 +28,35 @@ async function createVideo(video, type, format) {
         outputName: imageVideoName,
         amountSeconds: introSeconds,
     });
+    await deleteFile(getFilePath(introImage));
+    logActionText(`Intro ${introImage} created!`);
+
     await addFadeInOut({
         format,
         outputName: videoWithFadeName,
         filename: videoMetadata.filename,
         amountSeconds: videoMetadata.duration,
     });
-
-    const imageVideoFile = `${imageVideoName}.${format}`;
-    const videoWithFadeFile = `${videoWithFadeName}.${format}`;
-    const finalVideoName = `${video.trailerId}_final`;
-    await mergeVideos([imageVideoFile, videoWithFadeFile], finalVideoName, format);
-
-    await deleteFile(getFilePath(introImage));
     await deleteFile(getFilePath(videoMetadata.filename));
-    await deleteFile(getFilePath(imageVideoFile));
-    await deleteFile(getFilePath(videoWithFadeFile));
+    logActionText(`Fade add to ${videoWithFadeName}!`);
 
-    logActionText(`${finalVideoName} created!`);
+    const allVideos = await createVideosAndThumbnails(
+        videos.splice(1, videos.length),
+        type,
+        format,
+        [
+            ...allVideosAndThumbnails,
+            {
+                ...video,
+                metadata: videoMetadata,
+                mainVideoFile: `${videoWithFadeName}.${format}`,
+                duration: videoMetadata.duration + introSeconds,
+                descriptionVideoFile: `${imageVideoName}.${format}`,
+            },
+        ],
+    );
 
-    return {
-        ...video,
-        metadata: videoMetadata,
-        filename: `${finalVideoName}.${format}`,
-        duration: videoMetadata.duration + introSeconds,
-    };
+    return allVideos;
 }
 
 async function createThumbnail(thumbnailName, outputName, format) {
@@ -77,13 +84,25 @@ async function createAndUploadCompilationVideo(req, res) {
 
     logActionText('Downloading videos and creating intro');
 
-    const videosWithMetadata = await Promise.all(videos.map(video => createVideo(video, type, format)));
+    // |=>  DOWNLOADING VIDEOS AND CREATING INTRO
+    // |=>  INTRO JSRTYPNRON0_INTRO.PNG CREATED!
+    // |=>  FADE ADD TO JSRTYPNRON0_WITH_FADE!
+    // |=>  INTRO C0I88T0KACS_INTRO.PNG CREATED!
+    // |=>  FADE ADD TO C0I88T0KACS_WITH_FADE!
+    // |=>  INTRO LX9SPQPJGJU_INTRO.PNG CREATED!
+    // |=>  FADE ADD TO LX9SPQPJGJU_WITH_FADE!
+    // |=>  INTRO QNDZJ9KZUV4_INTRO.PNG CREATED!
+    const videosWithMetadata = await createVideosAndThumbnails(videos, type, format, []);
     const thumbnailVideoName = await createThumbnail(thumbnailName, 'thumbnail', format);
 
-    const compilatedVideos = [thumbnailVideoName, ...videosWithMetadata.map(({ filename }) => filename)];
-    await mergeVideos([...compilatedVideos, 'end_screen.webm'], 'final_video', format);
+    const videosToCompile = [thumbnailVideoName];
+    videosWithMetadata.forEach(videoData => {
+        videosToCompile.push(videoData.descriptionVideoFile, videoData.mainVideoFile);
+    });
 
-    await Promise.all(compilatedVideos.map(videoName => deleteFile(getFilePath(videoName))));
+    await mergeVideos([...videosToCompile, '../assets/end_screen.webm'], 'final_video', format);
+
+    await Promise.all(videosToCompile.map(videoName => deleteFile(getFilePath(videoName))));
 
     logSuccessText('Videos downloaded and intros created!');
 
@@ -95,7 +114,6 @@ module.exports = {
 };
 
 // 1 - Download youtube videos (see if video time is on return).
-// - Merge videos
 // 2 - Create video description as image.
 // 3 - Join Intro with youtube video and description image.
 // 4 - Create video description
