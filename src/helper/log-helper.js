@@ -1,3 +1,11 @@
+function getInfoText(text) {
+    return `\x1b[44m|=>  ${text.toUpperCase()}  \x1b[0m`;
+}
+
+function logInfoText(text) {
+    console.info(getInfoText(text));
+}
+
 function getActionText(text) {
     return `\x1b[45m|=>  ${text.toUpperCase()}  \x1b[0m`;
 }
@@ -29,4 +37,6 @@ module.exports = {
     logActionText,
     getSuccessText,
     logSuccessText,
+    getInfoText,
+    logInfoText,
 };

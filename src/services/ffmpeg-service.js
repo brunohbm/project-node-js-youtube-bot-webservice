@@ -3,15 +3,22 @@ const ffmpeg = require('ffmpeg-static');
 const childProcess = require('child_process');
 const { FILES_FOLDER_NAME } = require('../strings');
 const { writeFile, deleteFile } = require('../helper/file-helper');
+const { logInfoText } = require('../helper/log-helper');
 
 const FILES_PATH = `./${FILES_FOLDER_NAME}`;
 
 async function executeFfmpegCommands(commands) {
+    logInfoText('ffmpeg process started!');
     await new Promise((resolve, reject) => {
         const ffmpegProcess = childProcess.spawn(ffmpeg, commands, { windowsHide: true });
         ffmpegProcess.on('close', () => { resolve(); });
         ffmpegProcess.on('error', error => { reject(error); });
+        ffmpegProcess.stderr.on('data', data => {
+            const output = data.toString();
+            process.stdout.write(`\x1b[34m ${output} \x1b[0m`);
+        });
     });
+    logInfoText('ffmpeg process finished!');
 }
 
 async function addFadeInOut({

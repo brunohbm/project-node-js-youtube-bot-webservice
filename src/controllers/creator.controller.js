@@ -21,6 +21,7 @@ async function createVideosAndThumbnails(videos, type, format, allVideosAndThumb
     const introImage = createVideoIntroImage(video, type);
     const videoMetadata = await downloadYoutubeVideo(video.trailerId);
 
+    logActionText(`Started ${introImage} intro creation!`);
     await createVideoFromImage({
         format,
         addFade: true,
@@ -29,8 +30,9 @@ async function createVideosAndThumbnails(videos, type, format, allVideosAndThumb
         amountSeconds: introSeconds,
     });
     await deleteFile(getFilePath(introImage));
-    logActionText(`Intro ${introImage} created!`);
+    logSuccessText(`${introImage} intro created!`);
 
+    logActionText(`Started ${introImage} fade adition!`);
     await addFadeInOut({
         format,
         outputName: videoWithFadeName,
@@ -38,7 +40,7 @@ async function createVideosAndThumbnails(videos, type, format, allVideosAndThumb
         amountSeconds: videoMetadata.duration,
     });
     await deleteFile(getFilePath(videoMetadata.filename));
-    logActionText(`Fade add to ${videoWithFadeName}!`);
+    logSuccessText(`Fade added to ${videoWithFadeName}!`);
 
     const allVideos = await createVideosAndThumbnails(
         videos.splice(1, videos.length),
@@ -69,7 +71,7 @@ async function createThumbnail(thumbnailName, outputName, format) {
     });
     await deleteFile(getFilePath(thumbnailName));
 
-    logActionText('thumbnail created!');
+    logSuccessText('thumbnail created!');
 
     return `${thumbnailName}.${format}`;
 }
@@ -92,6 +94,7 @@ async function createAndUploadCompilationVideo(req, res) {
     // |=>  INTRO LX9SPQPJGJU_INTRO.PNG CREATED!
     // |=>  FADE ADD TO LX9SPQPJGJU_WITH_FADE!
     // |=>  INTRO QNDZJ9KZUV4_INTRO.PNG CREATED!
+
     const videosWithMetadata = await createVideosAndThumbnails(videos, type, format, []);
     const thumbnailVideoName = await createThumbnail(thumbnailName, 'thumbnail', format);
 
