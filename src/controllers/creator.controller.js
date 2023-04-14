@@ -73,7 +73,7 @@ async function createThumbnail(thumbnailName, outputName, format) {
 
     logSuccessText('thumbnail created!');
 
-    return `${thumbnailName}.${format}`;
+    return `${outputName}.${format}`;
 }
 
 async function createAndUploadCompilationVideo(req, res) {
