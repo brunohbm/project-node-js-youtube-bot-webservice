@@ -15,7 +15,7 @@ async function createVideosAndThumbnails(videos, type, format, allVideosAndThumb
     const [video] = videos;
     if (!video) return allVideosAndThumbnails;
 
-    const introSeconds = 12;
+    const introSeconds = 9;
     const imageVideoName = `${video.trailerId}_intro`;
     const videoWithFadeName = `${video.trailerId}_with_fade`;
     const introImage = createVideoIntroImage(video, type);
@@ -66,7 +66,7 @@ async function createThumbnail(thumbnailName, outputName, format) {
         format,
         outputName,
         addFade: true,
-        amountSeconds: 6,
+        amountSeconds: 5,
         filename: thumbnailName,
     });
     await deleteFile(getFilePath(thumbnailName));
@@ -85,15 +85,6 @@ async function createAndUploadCompilationVideo(req, res) {
     const format = 'webm';
 
     logActionText('Downloading videos and creating intro');
-
-    // |=>  DOWNLOADING VIDEOS AND CREATING INTRO
-    // |=>  INTRO JSRTYPNRON0_INTRO.PNG CREATED!
-    // |=>  FADE ADD TO JSRTYPNRON0_WITH_FADE!
-    // |=>  INTRO C0I88T0KACS_INTRO.PNG CREATED!
-    // |=>  FADE ADD TO C0I88T0KACS_WITH_FADE!
-    // |=>  INTRO LX9SPQPJGJU_INTRO.PNG CREATED!
-    // |=>  FADE ADD TO LX9SPQPJGJU_WITH_FADE!
-    // |=>  INTRO QNDZJ9KZUV4_INTRO.PNG CREATED!
 
     const videosWithMetadata = await createVideosAndThumbnails(videos, type, format, []);
     const thumbnailVideoName = await createThumbnail(thumbnailName, 'thumbnail', format);

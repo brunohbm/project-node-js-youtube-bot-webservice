@@ -1,5 +1,4 @@
 const OPTIONS = [
-    // Bad in the info
     {
         key: 'movies',
         label: 'Movies',
