@@ -1,5 +1,5 @@
 function breakTextIntoManyLines(fullText, lengthLimit) {
-    const wordsArray = fullText.trim().split(' ');
+    const wordsArray = String(fullText).trim().split(' ');
 
     const textWithLineBreak = wordsArray.reduce((textLines, word) => {
         const linesAmount = textLines.length;

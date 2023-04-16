@@ -13,8 +13,11 @@ function createVideoIntroImage(video, type) {
         nameLengthLimit: 31,
         fontColor: '#ffffff',
         fontFamily: "'Sans'",
+        bigTextSpacement: 250,
+        titleValueLengthLimit: 66,
         backgroundColor: '#091118',
         descriptionLengthLimit: 80,
+        descriptionTextSpacement: 125,
     };
     config.maxWidthContent = config.canvasWidth - (config.leftBarWidth * 4);
     config.leftPadding = config.leftBarWidth * 2;
@@ -23,19 +26,31 @@ function createVideoIntroImage(video, type) {
     const canvas = createCanvas(config.canvasWidth, config.canvasHeight);
     const context = canvas.getContext('2d');
 
-    const drawTitleAndValue = (title, value) => {
-        context.font = `600 80pt ${config.fontFamily}`;
-        context.fillText(`${title}:`, config.leftPadding, nextTopPosition, config.maxWidthContent);
-
-        context.font = `80pt ${config.fontFamily}`;
-        const titleWidth = context.measureText(`${title}:`).width * 1.2;
-        const leftPadding = config.leftPadding + titleWidth;
-
-        context.fillText(value, leftPadding, nextTopPosition, config.maxWidthContent);
-    };
-
     const drawText = text => {
         context.fillText(text, config.leftPadding, nextTopPosition, config.maxWidthContent);
+    };
+
+    const drawTitleAndValue = (title, value) => {
+        const formattedTitle = `${title}:`;
+
+        context.font = `600 80pt ${config.fontFamily}`;
+        context.fillText(formattedTitle, config.leftPadding, nextTopPosition, config.maxWidthContent);
+
+        context.font = `80pt ${config.fontFamily}`;
+        const titleWidth = context.measureText(formattedTitle).width * 1.2;
+        const leftPadding = config.leftPadding + titleWidth;
+
+        const firstLineLimit = config.titleValueLengthLimit - formattedTitle.length;
+        const [firstLine, ...restOfLines] = breakTextIntoManyLines(value, firstLineLimit);
+        context.fillText(firstLine, leftPadding, nextTopPosition, (config.maxWidthContent - titleWidth));
+
+        if (restOfLines.length) {
+            const linesAfterFirstOne = breakTextIntoManyLines(restOfLines.join(' '), config.titleValueLengthLimit);
+            linesAfterFirstOne.forEach(textLine => {
+                nextTopPosition += config.descriptionTextSpacement;
+                drawText(textLine);
+            });
+        }
     };
 
     context.fillStyle = config.backgroundColor;
@@ -50,7 +65,7 @@ function createVideoIntroImage(video, type) {
     context.font = `bold 150pt ${config.fontFamily}`;
     nameTextInLines.forEach(textLine => {
         drawText(textLine);
-        nextTopPosition += 250;
+        nextTopPosition += config.bigTextSpacement;
     });
 
     const descriptionInLines = breakTextIntoManyLines(video.description, config.descriptionLengthLimit);
@@ -60,12 +75,12 @@ function createVideoIntroImage(video, type) {
         nextTopPosition += 88;
     });
 
-    nextTopPosition += 250;
+    nextTopPosition += config.bigTextSpacement;
 
     drawTitleAndValue('Evaluation', video.evaluation);
-    nextTopPosition += 125;
+    nextTopPosition += config.descriptionTextSpacement;
     drawTitleAndValue('Release Year', video.releaseYear);
-    nextTopPosition += 125;
+    nextTopPosition += config.descriptionTextSpacement;
     drawTitleAndValue('Genre', video.genre);
 
     const buffer = canvas.toBuffer('image/png');
