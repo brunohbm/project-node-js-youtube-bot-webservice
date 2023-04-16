@@ -1,7 +1,7 @@
 const path = require('path');
 
 const { logActionText, logSuccessText } = require('../helper/log-helper');
-const { downloadYoutubeVideo } = require('../services/youtube-service');
+const { downloadYoutubeVideo, uploadVideo } = require('../services/youtube-service');
 const { createVideoIntroImage } = require('../services/canvas-service');
 const { createVideoFromImage, mergeVideos, addFadeInOut } = require('../services/ffmpeg-service');
 const { FILES_FOLDER_NAME } = require('../strings');
@@ -84,22 +84,25 @@ async function createAndUploadCompilationVideo(req, res) {
     } = req.body;
     const format = 'webm';
 
-    logActionText('Downloading videos and creating intro');
+    // logActionText('Downloading videos and creating intro');
 
-    const videosWithMetadata = await createVideosAndThumbnails(videos, type, format, []);
-    const thumbnailVideoName = await createThumbnail(thumbnailName, 'thumbnail', format);
+    // const videosWithMetadata = await createVideosAndThumbnails(videos, type, format, []);
+    // const thumbnailVideoName = await createThumbnail(thumbnailName, 'thumbnail', format);
+    // logSuccessText('Videos downloaded and intros created!');
 
-    const videosToCompile = [thumbnailVideoName];
-    videosWithMetadata.forEach(videoData => {
-        videosToCompile.push(videoData.descriptionVideoFile, videoData.mainVideoFile);
-    });
+    // const videosToCompile = [thumbnailVideoName];
+    // videosWithMetadata.forEach(videoData => {
+    //     videosToCompile.push(videoData.descriptionVideoFile, videoData.mainVideoFile);
+    // });
 
-    await mergeVideos([...videosToCompile, '../assets/end_screen.webm'], 'final_video', format);
+    // await mergeVideos([...videosToCompile, '../assets/end_screen.webm'], 'final_video', format);
+    // logSuccessText('Main video created!');
 
-    await Promise.all(videosToCompile.map(videoName => deleteFile(getFilePath(videoName))));
+    await uploadVideo();
 
-    logSuccessText('Videos downloaded and intros created!');
+    // await Promise.all(videosToCompile.map(videoName => deleteFile(getFilePath(videoName))));
 
+    logSuccessText('Video uploaded!');
     res.status(200).json({});
 }
 
@@ -107,7 +110,6 @@ module.exports = {
     createAndUploadCompilationVideo,
 };
 
-// 1 - Download youtube videos (see if video time is on return).
 // 2 - Create video description as image.
 // 3 - Join Intro with youtube video and description image.
 // 4 - Create video description
