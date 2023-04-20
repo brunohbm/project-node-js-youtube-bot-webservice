@@ -3,7 +3,8 @@ const path = require('path');
 const axios = require('axios');
 const youtubeDl = require('youtube-dl-exec');
 const { FILES_FOLDER_NAME } = require('../strings');
-const { getTokens } = require('./google-service');
+const { getAuthenticatedGoogleInstance } = require('./google-service');
+const { logActionText } = require('../helper/log-helper');
 
 async function createTagsFromText(text) {
     const { data } = await axios.get('https://rapidtags.io/api/generator', {
@@ -17,21 +18,20 @@ async function createTagsFromText(text) {
 }
 
 async function uploadVideo() {
-    const { access_token: token } = await getTokens(['https://www.googleapis.com/auth/youtube']);
-    console.log(token);
+    const gooogleAuthClient = await getAuthenticatedGoogleInstance(['https://www.googleapis.com/auth/youtube']);
+    const youtubeApi = gooogleAuthClient.youtube({ version: 'v3' });
+
     const videoFilePath = path.join(__dirname, `../../${FILES_FOLDER_NAME}/`, 'final_video.webm');
     const thumbnailPath = path.join(__dirname, `../../${FILES_FOLDER_NAME}/`, 'thumbnail.png');
     const videoFileSize = fs.statSync(videoFilePath).size;
 
-    const { data: videoData } = await axios.post('https://www.googleapis.com/upload/youtube/v3/videos', {
+    const videoInsertionParams = {
         part: 'snippet, status',
-        notifySubscribers: true,
         requestBody: {
             snippet: {
-                title: 'teste',
-                description: 'teste',
-                defaultLanguage: 'US',
-                tags: ['teste', 'teste1'],
+                title: 'Um título muito bonito Um título muito bonito',
+                description: 'Um título muito bonitoUm título muito bonitoUm título muito bonitoUm título muito bonitoUm título muito bonito',
+                tags: ['título', 'bonito', 'video', 'testes', 'aqui_tess'],
             },
             status: {
                 privacyStatus: 'unlisted',
@@ -40,28 +40,22 @@ async function uploadVideo() {
         media: {
             body: fs.createReadStream(videoFilePath),
         },
-    }, {
+    };
+
+    const { data: uploadedVideoInfo } = await youtubeApi.videos.insert(videoInsertionParams, {
         onUploadProgress: event => {
             const progress = Math.round((event.bytesRead / videoFileSize) * 100);
-            console.log(progress);
+            logActionText(`UPLOADING VIDEO ${progress}%`);
         },
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'video/*',
-        },
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
     });
 
-    await axios.post('https://www.googleapis.com/upload/youtube/v3/thumbnails/set', {
-        videoId: videoData.id,
+    await youtubeApi.thumbnails.set({
+        videoId: uploadedVideoInfo.id,
         media: {
-            mimeType: 'image/jpeg',
+            mimeType: 'image/png',
             body: fs.createReadStream(thumbnailPath),
         },
     });
-
-    return videoData;
 }
 
 async function getVideosInfoFromText(text, params = {}) {

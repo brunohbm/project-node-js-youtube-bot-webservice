@@ -1,30 +1,23 @@
 const { google } = require('googleapis');
-const express = require('express');
+const { startWebservice, stopWebservice } = require('./express-service');
 
 const AUTH_PORT = 5000;
 
 function createOAuthClient() {
     const { OAuth2 } = google.auth;
-    const client = new OAuth2(
+    const oAuthClient = new OAuth2(
         process.env.GOOGLE_CREDENCIAL_CLIENT_ID,
         process.env.GOOGLE_CREDENCIAL_CLIENT_SECRET,
         `http://localhost:${AUTH_PORT}/oauth2callback`,
     );
 
-    return client;
+    return oAuthClient;
 }
 
-async function startWebservice() {
-    return new Promise((resolve, reject) => {
-        const app = express();
-        const server = app.listen(AUTH_PORT, () => { resolve({ app, server }); });
-    });
-}
+async function getAuthCode(oAuthClient, scopes) {
+    const webServer = await startWebservice(AUTH_PORT);
 
-async function getAuthCode(client, scopes) {
-    const webServer = await startWebservice();
-
-    const consentUrl = client.generateAuthUrl({
+    const consentUrl = oAuthClient.generateAuthUrl({
         access_type: 'offline',
         scope: scopes,
     });
@@ -39,15 +32,16 @@ async function getAuthCode(client, scopes) {
         });
     });
 
+    await stopWebservice(webServer);
+
     return authCode;
 }
 
-async function getTokens(scopes) {
-    const client = createOAuthClient();
-    const authCode = await getAuthCode(client, scopes);
+async function getTokens(scopes, oAuthClient) {
+    const authCode = await getAuthCode(oAuthClient, scopes);
 
     const authTokens = await new Promise((resolve, reject) => {
-        client.getToken(authCode, (error, tokens) => {
+        oAuthClient.getToken(authCode, (error, tokens) => {
             if (error) return reject(error);
             return resolve(tokens);
         });
@@ -56,6 +50,17 @@ async function getTokens(scopes) {
     return authTokens;
 }
 
+async function getAuthenticatedGoogleInstance(scopes) {
+    const oAuthClient = createOAuthClient();
+
+    const authTokens = await getTokens(scopes, oAuthClient);
+    oAuthClient.setCredentials(authTokens);
+
+    google.options({ auth: oAuthClient });
+
+    return google;
+}
+
 module.exports = {
-    getTokens,
+    getAuthenticatedGoogleInstance,
 };
