@@ -17,42 +17,46 @@ async function createTagsFromText(text) {
     return data.tags;
 }
 
-async function uploadVideo() {
+async function uploadVideoAndThumbnail(params) {
+    const {
+        videoPath,
+        videoContent,
+        thumbnailPath,
+        thumbnailType,
+    } = params;
+    const videoFileSize = fs.statSync(videoPath).size;
+
     const gooogleAuthClient = await getAuthenticatedGoogleInstance(['https://www.googleapis.com/auth/youtube']);
     const youtubeApi = gooogleAuthClient.youtube({ version: 'v3' });
-
-    const videoFilePath = path.join(__dirname, `../../${FILES_FOLDER_NAME}/`, 'final_video.webm');
-    const thumbnailPath = path.join(__dirname, `../../${FILES_FOLDER_NAME}/`, 'thumbnail.png');
-    const videoFileSize = fs.statSync(videoFilePath).size;
 
     const videoInsertionParams = {
         part: 'snippet, status',
         requestBody: {
-            snippet: {
-                title: 'Um título muito bonito Um título muito bonito',
-                description: 'Um título muito bonitoUm título muito bonitoUm título muito bonitoUm título muito bonitoUm título muito bonito',
-                tags: ['título', 'bonito', 'video', 'testes', 'aqui_tess'],
-            },
+            snippet: videoContent,
             status: {
                 privacyStatus: 'unlisted',
             },
         },
         media: {
-            body: fs.createReadStream(videoFilePath),
+            body: fs.createReadStream(videoPath),
         },
     };
 
     const { data: uploadedVideoInfo } = await youtubeApi.videos.insert(videoInsertionParams, {
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
         onUploadProgress: event => {
             const progress = Math.round((event.bytesRead / videoFileSize) * 100);
-            logActionText(`UPLOADING VIDEO ${progress}%`);
+            logActionText(`VIDEO UPLOAD PROGRESS: ${progress}%`);
         },
     });
+
+    console.log({ uploadedVideoInfo });
 
     await youtubeApi.thumbnails.set({
         videoId: uploadedVideoInfo.id,
         media: {
-            mimeType: 'image/png',
+            mimeType: thumbnailType,
             body: fs.createReadStream(thumbnailPath),
         },
     });
@@ -104,10 +108,10 @@ async function downloadYoutubeVideo(videoId) {
 }
 
 module.exports = {
-    uploadVideo,
     createVideoUrl,
     getVideoFullInfo,
     createTagsFromText,
     downloadYoutubeVideo,
     getVideosInfoFromText,
+    uploadVideoAndThumbnail,
 };

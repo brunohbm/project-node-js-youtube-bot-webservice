@@ -38,4 +38,5 @@ async function createJSONListFromText(theme, itemsList) {
 
 module.exports = {
     createJSONListFromText,
+    fetchContentFromChatGPT,
 };
