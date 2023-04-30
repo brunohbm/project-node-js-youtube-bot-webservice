@@ -23,29 +23,36 @@ async function generateContentTags(content) {
 
     const tagsFromTheme = await youtubeService.createTagsFromText(theme);
     const tagsFromVideos = await Promise.all(videos.map(async ({ trailerId }) => {
+        if (!trailerId) return [];
+
         const { tags: videoTags } = await youtubeService.getVideoFullInfo(trailerId);
         return videoTags;
     }));
 
     return [
+        ...videos.map(video => video.name),
         ...tags,
         ...tagsFromTheme,
         ...tagsFromVideos.flat(),
-    ];
+    ].slice(0, 30);
 }
 
 async function addVideosTrailerLink(videos) {
-    const videosPrommise = videos.map(async video => {
-        const newVideo = { ...video };
-        const { items } = await youtubeService.getVideosInfoFromText(`${video.name} trailer`);
-        const { id: { videoId } } = items[0];
-        newVideo.trailerId = videoId;
+    try {
+        const videosPrommise = videos.map(async video => {
+            const newVideo = { ...video };
+            const { items } = await youtubeService.getVideosInfoFromText(`${video.name} trailer`);
+            const { id: { videoId } } = items[0];
+            newVideo.trailerId = videoId;
 
-        return newVideo;
-    });
+            return newVideo;
+        });
 
-    const allVideosTrailers = await Promise.all(videosPrommise);
-    return allVideosTrailers;
+        const allVideosTrailers = await Promise.all(videosPrommise);
+        return allVideosTrailers;
+    } catch (error) {
+        return videos;
+    }
 }
 
 async function generateVideosArray(req, res) {
