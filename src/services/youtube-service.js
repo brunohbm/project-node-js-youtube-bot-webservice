@@ -7,14 +7,18 @@ const { getAuthenticatedGoogleInstance } = require('./google-service');
 const { logActionText } = require('../helper/log-helper');
 
 async function createTagsFromText(text) {
-    const { data } = await axios.get('https://rapidtags.io/api/generator', {
-        params: {
-            type: 'YouTube',
-            query: text,
-        },
-    });
+    try {
+        const { data } = await axios.get('https://rapidtags.io/api/generator', {
+            params: {
+                type: 'YouTube',
+                query: text,
+            },
+        });
 
-    return data.tags;
+        return data.tags;
+    } catch (error) {
+        return [];
+    }
 }
 
 async function uploadVideoAndThumbnail(params) {
@@ -50,8 +54,6 @@ async function uploadVideoAndThumbnail(params) {
             logActionText(`VIDEO UPLOAD PROGRESS: ${progress}%`);
         },
     });
-
-    console.log({ uploadedVideoInfo });
 
     await youtubeApi.thumbnails.set({
         videoId: uploadedVideoInfo.id,

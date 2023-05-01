@@ -11,6 +11,21 @@ const VIDEO_JSON_CONFIG = {
     description: 'big description',
 };
 
+async function getVideosTags(videos) {
+    try {
+        const tagsFromVideos = await Promise.all(videos.map(async ({ trailerId }) => {
+            if (!trailerId) return [];
+
+            const { tags: videoTags } = await youtubeService.getVideoFullInfo(trailerId);
+            return videoTags;
+        }));
+
+        return tagsFromVideos;
+    } catch (error) {
+        return [];
+    }
+}
+
 async function generateContentTags(content) {
     const { theme, videos } = content;
 
@@ -21,19 +36,14 @@ async function generateContentTags(content) {
 
     tags = _uniq(tags);
 
+    const tagsFromVideos = await getVideosTags(videos);
     const tagsFromTheme = await youtubeService.createTagsFromText(theme);
-    const tagsFromVideos = await Promise.all(videos.map(async ({ trailerId }) => {
-        if (!trailerId) return [];
-
-        const { tags: videoTags } = await youtubeService.getVideoFullInfo(trailerId);
-        return videoTags;
-    }));
 
     return [
         ...videos.map(video => video.name),
         ...tags,
-        ...tagsFromTheme,
         ...tagsFromVideos.flat(),
+        ...tagsFromTheme,
     ].slice(0, 30);
 }
 

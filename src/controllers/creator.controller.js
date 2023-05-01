@@ -73,7 +73,6 @@ async function createThumbnail(thumbnailName, outputName, format, amountSeconds)
         amountSeconds,
         filename: thumbnailName,
     });
-    await deleteFile(getFilePath(thumbnailName));
 
     logSuccessText('thumbnail created!');
 
@@ -148,13 +147,14 @@ async function createAndUploadCompilationVideo(req, res) {
         await Promise.all(videosToCompile.map(videoName => deleteFile(getFilePath(videoName))));
         logSuccessText('Video uploaded!');
     } catch (error) {
+        console.info(getErrorText(JSON.stringify(error.response.data)));
+    } finally {
         let videoInfoTextFile = `TITLE: ${title}\n\n\n\n`;
         videoInfoTextFile += `TAGS: ${tags.join(', ')}\n\n\n\n`;
         videoInfoTextFile += description;
 
         await writeFile(getFilePath('video_info.txt'), videoInfoTextFile);
 
-        console.info(getErrorText(JSON.stringify(error.response.data)));
         logErrorText('Video upload failed, you will have to upload it manually!');
     }
 
