@@ -118,6 +118,7 @@ async function createAndUploadCompilationVideo(req, res) {
     const introTimeInSeconds = 5;
     logActionText('Downloading videos and creating intro');
 
+    // TODO - Use tiny png to reduce image size.
     const videosWithMetadata = await createVideosAndThumbnails(videos, type, format, []);
     const thumbnailVideoName = await createThumbnail(thumbnailName, 'thumbnail', format, introTimeInSeconds);
     logSuccessText('Videos downloaded and intros created!');
@@ -134,28 +135,27 @@ async function createAndUploadCompilationVideo(req, res) {
     const description = await createVideoDescription(title, videosWithMetadata, introTimeInSeconds);
 
     try {
+        let videoInfoTextFile = `TITLE: ${title.toUpperCase()}\n\n\n\n`;
+        videoInfoTextFile += `TAGS: ${tags.join(', ')}\n\n\n\n`;
+        videoInfoTextFile += description;
+        await writeFile(getFilePath('video_info.txt'), videoInfoTextFile);
+
         await uploadVideoAndThumbnail({
             videoPath: getFilePath(`${finalVideoName}.${format}`),
             videoContent: {
                 tags,
-                title,
                 description,
+                title: title.toUpperCase(),
             },
             thumbnailType,
             thumbnailPath: getFilePath(thumbnailName),
         });
-        await Promise.all(videosToCompile.map(videoName => deleteFile(getFilePath(videoName))));
         logSuccessText('Video uploaded!');
     } catch (error) {
         console.info(getErrorText(JSON.stringify(error.response.data)));
-    } finally {
-        let videoInfoTextFile = `TITLE: ${title}\n\n\n\n`;
-        videoInfoTextFile += `TAGS: ${tags.join(', ')}\n\n\n\n`;
-        videoInfoTextFile += description;
-
-        await writeFile(getFilePath('video_info.txt'), videoInfoTextFile);
-
         logErrorText('Video upload failed, you will have to upload it manually!');
+    } finally {
+        await Promise.all(videosToCompile.map(videoName => deleteFile(getFilePath(videoName))));
     }
 
     res.status(200).json({});

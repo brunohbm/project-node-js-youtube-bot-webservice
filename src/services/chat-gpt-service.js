@@ -23,6 +23,8 @@ async function fetchContentFromChatGPT(promptText) {
 }
 
 function createJsonFromApiResponse(apiResponse) {
+    if (!apiResponse) return '';
+
     return apiResponse
         .replace(/\n/g, '')
         .replace(/ {2}/g, '')
