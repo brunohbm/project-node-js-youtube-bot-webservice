@@ -56,7 +56,6 @@ async function uploadVideoAndThumbnail(params) {
         },
     });
 
-    // TODO - check if it is uploading the thumbnail
     await youtubeApi.thumbnails.set({
         videoId: uploadedVideoInfo.id,
         media: {

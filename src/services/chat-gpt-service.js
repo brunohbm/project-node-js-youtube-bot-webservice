@@ -17,7 +17,7 @@ async function fetchContentFromChatGPT(promptText) {
 
         return data.choices[0].text;
     } catch (error) {
-        console.warn(error);
+        console.warn(error.response);
         return '';
     }
 }

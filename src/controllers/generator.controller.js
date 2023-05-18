@@ -44,7 +44,7 @@ async function generateContentTags(content) {
         ...tags,
         ...tagsFromVideos.flat(),
         ...tagsFromTheme,
-    ].slice(0, 30);
+    ].slice(0, 26);
 }
 
 async function addVideosTrailerLink(videos) {

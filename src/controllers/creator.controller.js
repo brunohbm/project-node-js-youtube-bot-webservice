@@ -3,6 +3,7 @@ const path = require('path');
 const { logActionText, logSuccessText } = require('../helper/log-helper');
 const { downloadYoutubeVideo, uploadVideoAndThumbnail } = require('../services/youtube-service');
 const { createVideoIntroImage } = require('../services/canvas-service');
+const { tinifyImage } = require('../services/tinify-service');
 const { createVideoFromImage, mergeVideos, addFadeInOut } = require('../services/ffmpeg-service');
 const { FILES_FOLDER_NAME } = require('../strings');
 const { deleteFile, writeFile } = require('../helper/file-helper');
@@ -15,7 +16,7 @@ function getFilePath(filename) {
     return path.join(__dirname, `../../${FILES_FOLDER_NAME}/`, filename);
 }
 
-async function createVideosAndThumbnails(videos, type, format, allVideosAndThumbnails) {
+async function createVideosWithIntros(videos, type, format, allVideosAndThumbnails) {
     const [video] = videos;
     if (!video) return allVideosAndThumbnails;
 
@@ -46,7 +47,7 @@ async function createVideosAndThumbnails(videos, type, format, allVideosAndThumb
     await deleteFile(getFilePath(videoMetadata.filename));
     logSuccessText(`Fade added to ${videoWithFadeName}!`);
 
-    const allVideos = await createVideosAndThumbnails(
+    const allVideos = await createVideosWithIntros(
         videos.splice(1, videos.length),
         type,
         format,
@@ -65,7 +66,7 @@ async function createVideosAndThumbnails(videos, type, format, allVideosAndThumb
     return allVideos;
 }
 
-async function createThumbnail(thumbnailName, outputName, format, amountSeconds) {
+async function createIntroVideo(thumbnailName, outputName, format, amountSeconds) {
     await createVideoFromImage({
         format,
         outputName,
@@ -79,16 +80,21 @@ async function createThumbnail(thumbnailName, outputName, format, amountSeconds)
     return `${outputName}.${format}`;
 }
 
-async function createVideoDescription(title, videoData, initialTime) {
+async function createVideoDescriptionText(title, videoData, initialTime) {
     const breakLine = '\n';
-    let description = `0:00 - Intro${breakLine}`;
+    let description = '0:00 - Intro';
     let videoTimeInSeconds = initialTime;
 
-    const prompt = `
+    let prompt = `
         A short medium description of a youtube video with the theme ${title}, without any 
         personal opinions, this video will contain the trailer, genre, release 
-        year, and evaluation of each item. The items will be ${videoData.map(v => v.name).join(', ')}
+        year, and evaluation of each item ${videoData.map(v => v.name).join(', ')}
     `;
+
+    if (prompt.length > 194) {
+        prompt = `A short medium description of a youtube video with the theme ${title}`;
+    }
+
     const intro = await fetchContentFromChatGPT(prompt);
     description += `${intro.replace('5\n', '')}${breakLine}`;
 
@@ -107,55 +113,80 @@ async function createVideoDescription(title, videoData, initialTime) {
     return description;
 }
 
-async function createAndUploadCompilationVideo(req, res) {
+async function createVideoThumbnail(thumbnailName) {
+    const thumbnailType = thumbnailName.split('.').pop();
+    const thumbnailPath = getFilePath(`tinified_thumbnail.${thumbnailType}`);
+    await tinifyImage(getFilePath(thumbnailName), thumbnailPath);
+
+    return {
+        thumbnailPath,
+        thumbnailType: `image/${thumbnailType}`,
+    };
+}
+
+async function createVideoCompilation(videoData, introTimeInSeconds) {
     const {
         type,
-        videos, title, tags,
+        videos,
         image_name: thumbnailName,
-    } = req.body;
+    } = videoData;
     const format = 'webm';
+    const videosToCompile = [];
     const finalVideoName = 'final_video';
-    const introTimeInSeconds = 5;
-    logActionText('Downloading videos and creating intro');
 
-    // TODO - Use tiny png to reduce image size.
-    const videosWithMetadata = await createVideosAndThumbnails(videos, type, format, []);
-    const thumbnailVideoName = await createThumbnail(thumbnailName, 'thumbnail', format, introTimeInSeconds);
+    logActionText('Downloading videos and creating intro');
+    // TODO - Add the posibility to remove seconds from the end and begin of the video
+    const videosWithMetadata = await createVideosWithIntros(videos, type, format, []);
+    const introVideoPath = await createIntroVideo(thumbnailName, 'thumbnail', format, introTimeInSeconds);
     logSuccessText('Videos downloaded and intros created!');
 
-    const videosToCompile = [thumbnailVideoName];
-    videosWithMetadata.forEach(videoData => {
-        videosToCompile.push(videoData.descriptionVideoFile, videoData.mainVideoFile);
-    });
-
+    videosToCompile.push(introVideoPath);
+    videosWithMetadata.forEach(video => { videosToCompile.push(video.descriptionVideoFile, video.mainVideoFile); });
     await mergeVideos([...videosToCompile, '../assets/end_screen.webm'], finalVideoName, format);
+    await Promise.all(videosToCompile.map(videoName => deleteFile(getFilePath(videoName))));
     logSuccessText('Main video created!');
 
-    const thumbnailType = `image/${thumbnailName.split('.').pop()}`;
-    const description = await createVideoDescription(title, videosWithMetadata, introTimeInSeconds);
+    return {
+        videosMetadata: videosWithMetadata,
+        finalVideoPath: getFilePath(`${finalVideoName}.${format}`),
+    };
+}
 
+async function createTextFileWithVideoInfo(title, tags, videoDescription) {
+    let videoInfoTextFile = `TITLE: ${title.toUpperCase()}\n\n\n\n`;
+    videoInfoTextFile += `TAGS: ${tags.join(', ')}\n\n\n\n`;
+    videoInfoTextFile += videoDescription;
+    await writeFile(getFilePath('video_info.txt'), videoInfoTextFile);
+}
+
+async function createAndUploadCompilationVideo(req, res) {
     try {
-        let videoInfoTextFile = `TITLE: ${title.toUpperCase()}\n\n\n\n`;
-        videoInfoTextFile += `TAGS: ${tags.join(', ')}\n\n\n\n`;
-        videoInfoTextFile += description;
-        await writeFile(getFilePath('video_info.txt'), videoInfoTextFile);
+        const {
+            title, tags,
+            image_name: thumbnailName,
+        } = req.body;
+        const introTimeInSeconds = 5;
+
+        const { videosMetadata, finalVideoPath } = await createVideoCompilation(req.body, introTimeInSeconds);
+        const { thumbnailPath, thumbnailType } = await createVideoThumbnail(thumbnailName);
+        const videoDescription = await createVideoDescriptionText(title, videosMetadata, introTimeInSeconds);
+        await createTextFileWithVideoInfo(title, tags, videoDescription);
 
         await uploadVideoAndThumbnail({
-            videoPath: getFilePath(`${finalVideoName}.${format}`),
+            videoPath: finalVideoPath,
             videoContent: {
                 tags,
-                description,
-                title: title.toUpperCase(),
+                description: videoDescription,
+                title: title.toUpperCase().trim(),
             },
+            thumbnailPath,
             thumbnailType,
-            thumbnailPath: getFilePath(thumbnailName),
         });
         logSuccessText('Video uploaded!');
     } catch (error) {
-        console.info(getErrorText(JSON.stringify(error.response.data)));
+        const errorMessage = error?.response?.data || error;
+        console.info(getErrorText(JSON.stringify(errorMessage)));
         logErrorText('Video upload failed, you will have to upload it manually!');
-    } finally {
-        await Promise.all(videosToCompile.map(videoName => deleteFile(getFilePath(videoName))));
     }
 
     res.status(200).json({});
