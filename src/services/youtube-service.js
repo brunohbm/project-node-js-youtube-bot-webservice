@@ -33,7 +33,6 @@ async function uploadVideoAndThumbnail(params) {
     const gooogleAuthClient = await getAuthenticatedGoogleInstance(['https://www.googleapis.com/auth/youtube']);
     const youtubeApi = gooogleAuthClient.youtube({ version: 'v3' });
 
-    // TODO - Check if there isn't a way to add the default lenguage param and the "isn't for kids".
     const videoInsertionParams = {
         part: 'snippet, status',
         requestBody: {

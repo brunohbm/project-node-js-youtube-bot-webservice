@@ -135,7 +135,6 @@ async function createVideoCompilation(videoData, introTimeInSeconds) {
     const finalVideoName = 'final_video';
 
     logActionText('Downloading videos and creating intro');
-    // TODO - Add the posibility to remove seconds from the end and begin of the video
     const videosWithMetadata = await createVideosWithIntros(videos, type, format, []);
     const introVideoPath = await createIntroVideo(thumbnailName, 'thumbnail', format, introTimeInSeconds);
     logSuccessText('Videos downloaded and intros created!');
@@ -154,8 +153,8 @@ async function createVideoCompilation(videoData, introTimeInSeconds) {
 
 async function createTextFileWithVideoInfo(title, tags, videoDescription) {
     let videoInfoTextFile = `TITLE: ${title.toUpperCase()}\n\n\n\n`;
-    videoInfoTextFile += `TAGS: ${tags.join(', ')}\n\n\n\n`;
-    videoInfoTextFile += videoDescription;
+    videoInfoTextFile += `${videoDescription}\n\n\n\n`;
+    videoInfoTextFile += `TAGS: ${tags.join(', ')}`;
     await writeFile(getFilePath('video_info.txt'), videoInfoTextFile);
 }
 
