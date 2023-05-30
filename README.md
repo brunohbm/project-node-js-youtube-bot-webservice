@@ -35,7 +35,7 @@ Before you start the project make sure that you have created a `.env` file with 
 
 After that, run the project with the command `yarn start` and have fun:
 
-### Generate JSON Video
+### - Generate JSON Video
 
 #### Route: 
 `GET: /generator/video-compilation`
@@ -123,7 +123,22 @@ Exemple:
 }
 ```
 
-### Create video compilation
+---
+
+### - Upload thumbnail file
+
+#### Route: 
+`POST: /image/upload`
+
+#### Body:
+`BASE_64_OF_THE_IMAGE`
+
+#### Response
+`thumbnail.IMAGE_EXTENTION`
+
+---
+
+### - Create video compilation
 
 #### Route: 
 `POST: /create/compilation-video`
